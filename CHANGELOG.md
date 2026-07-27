@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+# [0.8.0] - 2026-07-27
+
+## Added
+
+- Added support for the `\mathord`, `\mathop`, `\mathbin`, `\mathrel`,
+    `\mathopen`, `\mathclose`, `\mathpunct`, and `\mathinner` atom-class
+    commands.
+- Added support for the `\overbracket`, `\underbracket`, `\buildrel`,
+    `\substack`, and `\sideset` stacking commands. `\sideset` currently parses
+    the side scripts but renders only its base operator.
+- Added all 68 case-sensitive `dvipsnames` colors from `xcolor` to `\color`,
+    `\textcolor`, and the other color commands.
+- Added the `\textrm`, `\textbf`, `\textit`, `\textsf`, and `\texttt`
+    text-mode font selectors inside math mode. Font state now also styles
+    `\text` content in MathML output.
+- Added double-struck italic support through `\mathbbit` and `\symbbit`.
+- Added `\strut` and the MathJax-compatible `\Space{width}{height}{depth}`
+    command.
+- Added fuzz targets for the parser, MathML renderer, input-complexity checks,
+    and comparisons with KaTeX, together with CI coverage for building them.
+- Expanded and reorganized the integration, font, MathML, and cross-browser
+    test suites.
+
+## Changed
+
+- __Breaking Change__: `Event::Space` gained a `depth` field so renderers can
+    represent spacing below the baseline.
+- __Breaking Change__: `Font` gained the `BoldSymbol` and
+    `DoubleStruckItalic` variants. Downstream exhaustive matches must handle
+    both variants.
+- `\kern`, `\hskip`, `\mkern`, and `\mskip` now accept dimensions or glue
+    wrapped in a single brace group for compatibility with KaTeX and MathJax.
+- Macro expansion is now limited to a depth of 64 and 1 MiB of allocated
+    expansion text to prevent infinite recursion and memory exhaustion.
+- The MathML renderer now recovers from malformed or unbalanced event streams
+    and cleans up its open renderer state instead of panicking.
+
+## Fixed
+
+- Fixed unbraced command arguments consuming an entire run of digits; for
+    example, `\frac12` is now parsed as `\frac{1}{2}`.
+- Fixed HTML special characters in `\text` output not being escaped.
+- Fixed `\boldsymbol` rendering: Latin letters and lowercase Greek use bold
+    italic, while capital Greek and digits use bold upright.
+- Fixed `\mathup` and `\symup` selecting the calligraphic font instead of the
+    upright font.
+- Fixed crashes caused by backslashed multibyte characters, unclosed
+    environments, unexpected alignment or newline events, invalid macro
+    parameters, out-of-bounds suffix scans, and error spans crossing UTF-8
+    character boundaries.
+
 # [0.7.1] - 2024-11-18
 
 ## Added
