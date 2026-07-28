@@ -844,6 +844,26 @@ mod tests {
     }
 
     #[test]
+    fn struts() {
+        let store = Storage::new();
+
+        for (input, height) in [(r"\mathstrut", 0.7), (r"\strut", 1.0)] {
+            let events = Parser::new(input, &store)
+                .collect::<Result<Vec<_>, ParserError>>()
+                .unwrap();
+
+            assert_eq!(
+                events,
+                vec![Event::Space {
+                    width: None,
+                    height: Some(Dimension::new(height, DimensionUnit::Em)),
+                    depth: None,
+                }]
+            );
+        }
+    }
+
+    #[test]
     fn expansions_in_groups() {
         let store = Storage::new();
         let mut parser = Parser::new(

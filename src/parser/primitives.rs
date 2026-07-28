@@ -742,6 +742,7 @@ impl<'b, 'store> InnerParser<'b, 'store> {
             "strut" => E::Space {
                 width: None,
                 height: Some(Dimension::new(1.0, DimensionUnit::Em)),
+                depth: None,
             },
             "~" | "nobreakspace" => E::Content(C::Text("&nbsp;")),
             // Variable spacing
@@ -1879,7 +1880,7 @@ impl<'b, 'store> InnerParser<'b, 'store> {
                 if let Some(style) = style {
                     self.buffer.push(I::Event(E::StateChange(SC::Style(style))));
                 }
-                if horizontal_lines.len() > 0 {
+                if !horizontal_lines.is_empty() {
                     self.buffer
                         .push(I::Event(E::EnvironmentFlow(EnvironmentFlow::StartLines {
                             lines: horizontal_lines,

@@ -68,8 +68,8 @@ async fn browser_tests(command: &str, name: &str) -> anyhow::Result<()> {
         .connect("http://localhost:4444")
         .await?;
 
-    let rendered = &*RENDERED.lock().unwrap();
-    for (table_name, rows) in rendered {
+    let rendered = RENDERED.lock().unwrap().clone();
+    for (table_name, rows) in &rendered {
         for (_input, output) in rows {
             html_template(
                 tmp.as_file_mut(),

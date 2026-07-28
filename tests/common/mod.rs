@@ -63,6 +63,9 @@ pub fn show_errors(parser: Parser) -> Result<(), usize> {
     }
 }
 
+// This shared module is also compiled into the cross-browser test, which uses
+// its own table renderer.
+#[allow(dead_code)]
 pub fn tabled(file: &mut std::fs::File) -> anyhow::Result<()> {
     file.write_all(br#"<table style="max-width: 60vw; margin: auto;">"#)?;
     let mut rendered = RENDERED.lock().unwrap();
