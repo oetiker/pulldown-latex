@@ -77,6 +77,16 @@ should_error! {
     r"\mskip{1em plus 1em}",
 }
 
+should_error! {
+    // Issue #56: `\char` followed by a multi-byte non-ASCII character sliced the
+    // input at byte index 1, which is not a char boundary, and panicked (in
+    // release too, so a DoS on untrusted input). It must return an error instead.
+    char_number_non_ascii,
+    "\\char\u{a7}",    // 2-byte: §
+    "\\char\u{27e8}",  // 3-byte: ⟨
+    "\\char\u{1f600}", // 4-byte: 😀
+}
+
 #[test]
 fn macro_param_overflow() {
     // Issue #44: `then_some` eagerly evaluates `c as u8 - b'0'` causing overflow

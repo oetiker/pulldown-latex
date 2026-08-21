@@ -328,6 +328,12 @@ pub fn unsigned_integer(input: &mut &str) -> InnerResult<usize> {
     if next_char.is_ascii_digit() {
         return Ok(decimal(input));
     }
+    // A non-ASCII character can be more than one byte wide, so slicing `input`
+    // at byte index 1 below would panic on a non-char-boundary. None of the
+    // valid number prefixes (`, ', ") are non-ASCII, so reject it as a number.
+    if !next_char.is_ascii() {
+        return Err(ErrorKind::Number);
+    }
     *input = &input[1..];
     match next_char {
         '`' => {
