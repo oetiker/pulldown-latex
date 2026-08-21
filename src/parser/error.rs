@@ -182,6 +182,7 @@ pub(crate) enum ErrorKind {
     ArrayNoColumns,
     MissingExpansion,
     MacroRecursionLimit,
+    ArgumentRecursionLimit,
     Token,
 }
 
@@ -235,6 +236,7 @@ impl Display for ErrorKind {
             ErrorKind::ArrayNoColumns => f.write_str("array must have at least one column of the type `c`, `l` or `r`"),
             ErrorKind::MissingExpansion => f.write_str("The macro definition is missing an expansion"),
             ErrorKind::MacroRecursionLimit => f.write_str("macro expansion depth limit exceeded (possible infinite recursion)"),
+            ErrorKind::ArgumentRecursionLimit => f.write_str("argument nesting depth limit exceeded (too many control sequences given as arguments to one another)"),
             ErrorKind::Token => f.write_str("expected a token"),
         }
     }

@@ -16,7 +16,7 @@ use super::{
         char_delimiter_map, control_sequence_delimiter_map, is_binary, is_relation, token_to_delim,
     },
     AlignmentCount, Argument, CharToken, ErrorKind, InnerParser, InnerResult, Instruction as I,
-    Token,
+    Token, MAX_ARGUMENT_DEPTH,
 };
 
 impl<'b, 'store> InnerParser<'b, 'store> {
@@ -132,7 +132,21 @@ impl<'b, 'store> InnerParser<'b, 'store> {
     }
 
     /// Handle a supported control sequence, pushing instructions to the provided stack.
+    ///
+    /// A command whose argument is an unbraced control sequence re-enters this function
+    /// through `handle_argument`, so this is the single entry point of the argument
+    /// recursion and the only place where its depth needs to be counted.
     pub(super) fn handle_primitive(&mut self, control_sequence: &'store str) -> InnerResult<()> {
+        self.argument_depth += 1;
+        if self.argument_depth > MAX_ARGUMENT_DEPTH {
+            return Err(ErrorKind::ArgumentRecursionLimit);
+        }
+        let result = self.handle_primitive_inner(control_sequence);
+        self.argument_depth -= 1;
+        result
+    }
+
+    fn handle_primitive_inner(&mut self, control_sequence: &'store str) -> InnerResult<()> {
         let event = match control_sequence {
             "arccos" | "cos" | "csc" | "exp" | "ker" | "sinh" | "arcsin" | "cosh" | "deg"
             | "lg" | "ln" | "arctan" | "cot" | "det" | "hom" | "log" | "sec" | "tan" | "arg"

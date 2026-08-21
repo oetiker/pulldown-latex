@@ -30,6 +30,15 @@ pub(crate) use error::{ErrorKind, InnerResult, ParserError};
 const MAX_EXPANSION_DEPTH: usize = 64;
 const MAX_EXPANSION_BYTES: usize = 1024 * 1024; // 1 MB
 
+// Guard against unbounded recursion on arguments. When the argument to a
+// command is an unbraced control sequence, `handle_argument` re-enters
+// `handle_primitive`, so `\sqrt\sqrt\sqrt … x` costs one stack frame per
+// control sequence and a few hundred bytes of input can overflow the stack.
+// A stack overflow aborts the process, so a caller cannot contain it.
+// Braced arguments are unaffected: they are pushed as an `Instruction::SubGroup`
+// and drained iteratively, so they cost no stack.
+const MAX_ARGUMENT_DEPTH: usize = 32;
+
 /// The parser completes the task of transforming the input `LaTeX` into a symbolic representation,
 /// namely a stream of [`Event`]s.
 ///
@@ -123,6 +132,7 @@ impl<'store> Iterator for Parser<'store> {
                     macro_context: &mut self.macro_context,
                     storage: self.storage,
                     span_stack: &mut self.span_stack,
+                    argument_depth: 0,
                 };
 
                 let (desc, rest) = inner.parse_next();
@@ -190,6 +200,11 @@ struct InnerParser<'b, 'store> {
     macro_context: &'b mut MacroContext<'store>,
     storage: &'store bumpalo::Bump,
     span_stack: &'b mut SpanStack<'store>,
+    /// Number of `handle_primitive` calls currently on the stack.
+    ///
+    /// Maintained by `handle_primitive` itself, which is the only entry point of
+    /// the argument recursion, and bounded by `MAX_ARGUMENT_DEPTH`.
+    argument_depth: usize,
 }
 
 impl<'b, 'store> InnerParser<'b, 'store> {

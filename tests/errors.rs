@@ -133,6 +133,38 @@ fn macro_recursion_limit() {
 }
 
 #[test]
+fn argument_recursion_limit() {
+    // A command whose argument is an unbraced control sequence re-enters the
+    // parser once per control sequence, so `\sqrt\sqrt\sqrt … x` used to
+    // overflow the stack and abort the process rather than return an error.
+    // A `#[test]` thread gets 2 MiB, on which an unguarded debug build dies at
+    // 134 links, so the depths used here stay far below that.
+    for command in [r"\sqrt", r"\overline", r"\hat", r"\not", r"\mathbb"] {
+        let mut storage = Storage::new();
+
+        let at_limit = format!("{} x", command.repeat(32));
+        let result = Parser::new(&at_limit, &storage).collect::<Result<Vec<_>, _>>();
+        assert!(result.is_ok(), "expected success for input: {}", at_limit);
+        storage.reset();
+
+        let past_limit = format!("{} x", command.repeat(33));
+        let result = Parser::new(&past_limit, &storage).collect::<Result<Vec<_>, _>>();
+        assert!(result.is_err(), "expected error for input: {}", past_limit);
+        storage.reset();
+    }
+}
+
+#[test]
+fn argument_recursion_limit_ignores_braced_arguments() {
+    // Braced arguments are pushed as a subgroup and drained iteratively, so
+    // they cost no stack and must not be counted against the depth limit.
+    let storage = Storage::new();
+    let input = format!("{}x{}", r"\sqrt{".repeat(1000), "}".repeat(1000));
+    let result = Parser::new(&input, &storage).collect::<Result<Vec<_>, _>>();
+    assert!(result.is_ok(), "expected success for 1000 braced radicals");
+}
+
+#[test]
 fn suffix_bounds_check() {
     // content_with_suffix must check bounds before accessing the slice.
     let storage = Storage::new();
